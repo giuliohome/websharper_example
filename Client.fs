@@ -9,6 +9,7 @@ open WebSharper.UI.Html
 
 open WebSharper.Google.Visualization
 open WebSharper.Google.Visualization.Base
+open WebSharper.Google.Visualization.Events
 
 [<JavaScript>]
 module Client =
@@ -49,13 +50,29 @@ module Client =
 
 
     let TableExample () =
-        (div [] []).OnAfterRender (fun container ->
-            let visualization = new Table(container)
+        let  tdata = TableData()
+        let rvText = Var.Create ""
+        let view = View.FromVar rvText
+        let inputField = (div [] []).OnAfterRender (fun container ->
+            let visualization = new  WebSharper.Google.Visualization.Table(container)
             let options =
                 TableOptions(
                     showRowNumber = true,
-                    width = "600")
-            visualization.draw(TableData(), options))
+                    width = "600" )
+            Table.Select(visualization).Add(fun () -> 
+                let sel = visualization.getSelection() :?> obj[]
+                let cell = sel.[0]
+                let index : int =  cell?row 
+                tdata.getValue(float index,float 0).ToString()
+                |> Var.Set rvText
+            )
+            visualization.draw(tdata, options))
+        let content =
+            div [] [
+                inputField
+                textView view
+            ]
+        content
 
     let InputTransform () =
         let cls s = attr.``class`` s
